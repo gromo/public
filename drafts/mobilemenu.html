@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+        <title>Mobile Menu</title>
+
+        <style type="text/css">
+            html, body { height: 100%; margin: 0; overflow: hidden; padding: 0; width: 100%; }
+            #wrapper { height: 100%; position: relative; width: 100%; }
+            #menu { height: 100%; left: -100%; overflow: auto; position: absolute; width: 100%; }
+            #content { height: 100%; overflow: auto; width: 100%; }
+
+            #menu { background-color: #ccf; }
+            #wrapper { background-color: #cfc; }
+
+        </style>
+
+        <script src="http://js.dev/jquery/jquery.js"></script>
+        <script src="jquery.swipe.js"></script>
+        <script>
+            jQuery(function($){
+
+                if(!$.easing.easeOutCubic){
+                    $.easing.easeOutCubic = function (x, t, b, c, d) {
+                        return c*((t=t/d-1)*t*t + 1) + b;
+                    };
+                }
+
+                var animating = false;
+                var container = $('#wrapper');
+                var isMenu = false;
+                var width = container.width();
+
+                container.swipe({
+                    "onStart": function(event){
+                        if(animating){
+                            return false;
+                        }
+                        // allow swipe to menu only when finger is in left/right 1/3 of a screen
+                        //if(isMenu && event.pageX < width * 2 / 3){
+                        //    return false;
+                        //}
+                        //if(!isMenu && event.pageX > width / 3){
+                        //    return false;
+                        //}
+                        width = container.width();
+                    },
+                    "onMove": function(event, distance){
+                        if(isMenu){
+                            if(distance > 0)
+                                distance = 0;
+                            distance += width;
+                        } else {
+                            if(distance < 0)
+                                distance = 0;
+                        }
+                        $('#wrapper').css('left', distance + 'px');
+                    },
+                    "onEnd": function(event, distance, swipe){
+                        var animateTo = {
+                            "left": isMenu ? width : 0
+                        };
+                        var duration = 200;
+                        var easing = 'swing';
+
+                        if(swipe || (Math.abs(distance) > width / 2)){
+                            if(event.swipe){
+                                easing = 'easeOutCubic';
+                            } else {
+                                swipe = (distance > 0) ? 'right' : 'left';
+                            }
+                            if(isMenu && swipe == 'left'){
+                                animateTo.left = 0;
+                                isMenu = false;
+                            }
+                            if(!isMenu && swipe == 'right'){
+                                animateTo.left = width;
+                                isMenu = true;
+                            }
+                        }
+                        animating = true;
+                        container.animate(animateTo, duration, easing, function(){
+                            animating = false;
+                            container.css({
+                                "left": isMenu ? "100%" : ""
+                            });
+                        });
+                    },
+                    "onCancel": function(event){
+                        container.css({
+                            "left": isMenu ? "100%" : ""
+                        });
+                    }
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="menu">
+                MENU
+            </div>
+            <div id="content">
+                CONTENT
+            </div>
+        </div>
+    </body>
+</html>

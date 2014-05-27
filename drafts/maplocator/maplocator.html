@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Map Locator Example</title>
+    <script type="text/javascript" src="http://maps.google.co.uk/maps/api/js?sensor=false&libraries=geometry"></script>
+    <script type="text/javascript" src="http://js.dev/jquery/jquery.js"></script>
+    <script type="text/javascript" src="maplocator.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+
+            var locations = [
+                {id: 1, lat: 40.7152, lng: -74.0111, title: 'Kaffe 1668'},
+                {id: 2, lat: 40.7193, lng: -73.9811, title: 'Hamilton Fish Park'}
+            ];
+
+            var ml = new MapLocator({
+                "container": "map",
+                "locations": locations,
+                "onFilterLocations": function(location){
+                    return true;
+                },
+                "onMapClick": null,
+                "onMarkerClick": null,
+                "onSearchSuccess": function(locations, address, radius){
+                    var marker = this.map.marker;
+                    var map = this.map;
+
+                    console.log(locations[0].latlng);
+
+                    marker.setMap(map);
+                    marker.setIcon(this.markerIcon);
+                    marker.setPosition(locations[0].latlng);
+                    this.showInRadius(locations[0].latlng, radius);
+                    map.setZoom(map.getZoom() + 1);
+                }
+            });
+
+            $.each(locations, function(i, location){
+                $('<input type="button" value="'+location.title+'">').appendTo('#locations').click(function(){
+                    ml.showLocationById(location.id);
+                });
+            });
+
+            $('<input type="button" value="SHOW ROUTE">').appendTo('#locations').click(function(){
+                ml.showRoute({
+                    "origin": new google.maps.LatLng(locations[0].lat, locations[0].lng),
+                    "destination": new google.maps.LatLng(locations[1].lat, locations[1].lng),
+                    "travelMode": 'DRIVING',
+                    "onSuccess": function(result){
+                        var steps = result.routes[0].legs[0].steps;
+                        $('#route').empty();
+                        for(var i=0; i<steps.length; i++){
+                            $('<div>').html('<strong>'+(i+1)+'</strong> '+steps[i].instructions).appendTo('#route');
+                        }
+                    }
+                });
+            });
+
+            $('#search').bind('click', function(){ ml.search($('#address').val(), $('#distance').val()); });
+        });
+    </script>
+    <style type="text/css">
+        #map {
+            height: 500px;
+            width: 800px;
+        }
+
+        #search_form {
+            padding: 20px;
+        }
+
+        #locations {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div id="search_form">
+        <input type="text" id="address" style="width: 200px;" value="ny, washington market park">
+        <select id="distance">
+            <option value="1605">1 mile</option>
+            <option value="3210">2 mile</option>
+            <option value="8025">5 mile</option>
+            <option value="16050">10 miles</option>
+        </select>
+        <input type="button" value="search" id="search">
+    </div>
+
+    <div id="locations"></div>
+    <div id="route"></div>
+</body>
+</html>
